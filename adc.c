@@ -1,11 +1,5 @@
 // For utilising ADC inputs with a microcontroller
 
-// PORTS AND PINS
-#define SENSORMID_LEFTMID 4
-#define SENSORMID_LEFTOUTER 5
-#define SENSORMID_RIGHTMID 7
-#define SENSORMID_RIGHTOUTER 6
-
 // PREDEFINES
 void adc_init();
 uint16_t adc_read(uint8_t ch);

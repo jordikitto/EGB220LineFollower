@@ -6,6 +6,8 @@
 #define MOTORLEFT_REVERSE OCR0A
 #define MOTORLEFT_FORWARD OCR0B
 
+#define SET_SPEED(percent) (percent) * 255
+
 // PREDEFINES
 void setupMotor2AndTimer0();
 void setupMotor1AndTimer1();
@@ -45,4 +47,21 @@ void setupMotor1AndTimer1() {
 	OCR1B = 0; // Backward 0%
 
 	SET_OUTPUT(TCCR1B, 2); // Start timer (no prescaling)
+}
+
+void Brakes_Release() {
+	MOTORRIGHT_REVERSE = SET_SPEED(0);
+	MOTORRIGHT_FORWARD = SET_SPEED(0);
+	MOTORLEFT_REVERSE = SET_SPEED(0);
+	MOTORLEFT_FORWARD = SET_SPEED(0);
+}
+
+void Brake_Right() {
+	MOTORRIGHT_FORWARD = SET_SPEED(1);
+	MOTORRIGHT_REVERSE = SET_SPEED(1);
+}
+
+void Brake_Left() {
+	MOTORLEFT_FORWARD = SET_SPEED(1);
+	MOTORLEFT_REVERSE = SET_SPEED(1);
 }

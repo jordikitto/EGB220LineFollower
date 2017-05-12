@@ -29,5 +29,6 @@
  */
 #define ABS(x) ((x >= 0) ? x : -x)
 #define SIGN(x) ((x > 0) - (x < 0))
+#define ROUND(x) (x < 0 ? x - 0.5 : x + 0.5)
 
 #endif /* MACROS_H_ */
