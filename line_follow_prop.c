@@ -55,13 +55,9 @@ int main() {
 		led_reset();
 
 		// Detect if off-line/derailed
-		if (isBlack(ReadSensorMidAllAvg())) {
+		if (isBlack(sensor_right_out) && isBlack(sensor_right_mid) && isBlack(sensor_left_mid) && isBlack(sensor_left_out)) {
 			current_mode = emergency_mode;
 		}
-
-		// if (isBlack(sensor_right_out) && isBlack(sensor_right_mid) && isBlack(sensor_left_mid) && isBlack(sensor_left_out)) {
-		// 	current_mode = emergency_mode;
-		// }
 
 		// Detect mode
 		if (current_mode == NORMAL) { // Must be coming from center of line (AKA Normal mode)

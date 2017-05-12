@@ -34,21 +34,3 @@ float ReadSensorMid(int sensor_num) {
 			break;
 	}
 }
-
-// Func: Returns the average of selected sensors from middle sensorboard
-float ReadSensorMidRangeAvg(int sensors[], int size) {
-	int i;
-	float sum = 0;
-
-	for (i = 0; i < size; i++) {
-		sum += ReadSensorMid(sensors[i]);
-	}
-
-	return sum/size;
-}
-
-// Func: Returns the average of all sensors from middle sensorboard
-float ReadSensorMidAllAvg() {
-	int range[4] = {0,1,2,4};
-	return ReadSensorMidRangeAvg(range, 4);
-}
