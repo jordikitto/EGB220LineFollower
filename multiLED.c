@@ -7,7 +7,7 @@
 #define PORTGREEN PORTE
 #define PINGREEN 6
 #define PORTRED PORTB
-#define PINRED 0
+#define PINRED 2
 #define PORTBLUE PORTB
 #define PINBLUE 1
 

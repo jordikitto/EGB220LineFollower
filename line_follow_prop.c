@@ -9,6 +9,8 @@
 #include "motors.c"
 #include "adc.c"
 #include "sensors.c"
+#include "switches.c"
+#include "encoders.c"
 
 enum mode {LEFT, NORMAL, RIGHT};
 enum mode current_mode = NORMAL;
@@ -35,10 +37,32 @@ int main() {
 
 	adc_init();
 	led_init();
+	switches_init();
 
 	sei(); // Enable global interrupts
 	setupMotor2AndTimer0();
 	setupMotor1AndTimer1();
+
+	led_reset();
+
+	while(1) {
+		if (isWhite(ReadEncoderLeft())) {
+			led_set_red();
+		}
+		if (isWhite(ReadEncoderRight())) {
+			led_set_green();
+		}
+
+		if (isBlack(ReadEncoderRight())) {
+			led_set_yellow();
+		}
+
+		if (isBlack(ReadEncoderLeft())) {
+			led_set_purple();
+		}
+	}
+
+	led_test_all();
 
 	// Start countdown
 	led_set_red();
