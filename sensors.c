@@ -3,8 +3,14 @@
 // PORTS AND PINS
 #define SENSORMID_LEFTMID 4
 #define SENSORMID_LEFTOUTER 5
-#define SENSORMID_RIGHTMID 7
-#define SENSORMID_RIGHTOUTER 6
+#define SENSORMID_RIGHTMID 1
+#define SENSORMID_RIGHTOUTER 0
+
+#define SENSORRIGHT_INNER 6
+#define SENSORRIGHT_OUTER 7
+
+#define SENSORLEFT_INNER 10
+#define SENSORLEFT_OUTER 11
 
 #define isBlack(sensor_value) (sensor_value > threshold_black)
 #define isWhite(sensor_value) (sensor_value < threshold_white)
