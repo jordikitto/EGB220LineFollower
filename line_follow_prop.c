@@ -19,6 +19,9 @@ int speed_max = SET_SPEED(0.5);
 int sensor_out_dist = 15;
 int sensor_mid_dist = 5;
 
+float last_error = 0.0;
+float integral = 0;
+
 // Interrupts
 ISR(TIMER0_OVF_vect) {
 
@@ -80,10 +83,15 @@ int main() {
 		float num = -1*sensor_out_dist*(sensor_left_out - sensor_right_out) + -1*sensor_mid_dist*(sensor_left_mid - sensor_right_mid);
 		float denom = sensor_right_out + sensor_right_mid + sensor_left_mid + sensor_left_out;
 
-		float error = num/denom;
+		// PID
+		float error = num/denom; // proportional
+		float derivative = error - last_error;
+		last_error = error;
+		integral += error;
 
 		// Setup values for switch
-		float speed_turn = speed_max * error/15;
+		float speed_turn = (error/15) * speed_max + integral/500;
+		//float speed_turn = error/15 + integral/ + derivative*0.5;
 
 		// Act based on mode
 		switch (current_mode) {
