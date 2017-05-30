@@ -19,10 +19,8 @@
 float threshold_black = 0.5;
 float threshold_white = 0.2;
 
-float color_start_min;
-float color_start_max;
-float color_finish_min;
-float color_finish_max;
+float color_start;
+float color_finish;
 int color_readings = 100;
 
 // Functions
@@ -88,11 +86,11 @@ void setup_color_marker_sensing() {
 	while (index < color_readings) {
 		readings_start[index] = ReadSensorRight(1); // Takes average of both
 		index++;
-		_delay_ms(20);
+		_delay_ms(10);
 	}
 
-	color_start_max = get_max(readings_start, color_readings);
-	color_start_min = get_min(readings_start, color_readings);
+	// Get average value
+	color_start = get_sum(readings_start, color_readings)/color_readings;
 
 	// Ping LED
 	led_reset();
@@ -113,11 +111,11 @@ void setup_color_marker_sensing() {
 	while (index < color_readings) {
 		readings_finish[index] = ReadSensorRight(1); // Takes average of both
 		index++;
-		_delay_ms(20);
+		_delay_ms(10);
 	}
 
-	color_finish_max = get_max(readings_finish, color_readings);
-	color_finish_min = get_min(readings_finish, color_readings);
+	// Get average value
+	color_finish = get_sum(readings_finish, color_readings)/color_readings;
 
 	// Ping LED
 	led_reset();
@@ -128,24 +126,26 @@ void setup_color_marker_sensing() {
 }
 
 int within_start_color_range(float reading) {
-	if (reading > color_start_min) {
-		if (reading < color_start_max) {
-			return 1;
-		} else {
-			return 0;
-		}
+	// Gets a similarity reading
+	float start_percent = ABS(reading - color_start)/color_start;
+	float finish_percent = ABS(reading - color_start)/color_start;
+
+	// If similarity is closer to start color, return true
+	if (start_percent < finish_percent) {
+		return 1;
 	} else {
 		return 0;
 	}
 }
 
 int within_finish_color_range(float reading) {
-	if (reading > color_finish_min) {
-		if (reading < color_finish_max) {
-			return 1;
-		} else {
-			return 0;
-		}
+	// Gets a similarity reading
+	float start_percent = ABS(reading - color_finish)/color_finish;
+	float finish_percent = ABS(reading - color_finish)/color_finish;
+
+	// If similarity is closer to finish color, return true
+	if (start_percent > finish_percent) {
+		return 1;
 	} else {
 		return 0;
 	}
