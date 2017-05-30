@@ -4,39 +4,38 @@
  */
 
 // PORTS AND PINS
-#define PORTGREEN PORTE
-#define PINGREEN 6
+#define PORTBLUE PORTE
+#define PINBLUE 6
+#define DDRBLUE DDRE
 #define PORTRED PORTB
 #define PINRED 2
-#define PORTBLUE PORTB
-#define PINBLUE 1
+#define DDRRED DDRB
+#define PORTGREEN PORTB
+#define PINGREEN 1
+#define DDRGREEN DDRB
 
 // FUNCTIONS
 void led_init() {
-	SET_OUTPUT(DDRB, PINBLUE);
-	SET_OUTPUT(DDRB, PINRED);
-	SET_OUTPUT(DDRE, PINGREEN);
+	SET_OUTPUT(DDRBLUE, PINBLUE);
+	SET_OUTPUT(DDRRED, PINRED);
+	SET_OUTPUT(DDRGREEN, PINGREEN);
 }
 
 void led_set_green() {
 	OUTPUT_HIGH(PORTGREEN, PINGREEN);
-	OUTPUT_LOW(PORTRED, PINRED);
 	OUTPUT_LOW(PORTBLUE, PINBLUE);
 }
 
 void led_set_red() {
-	OUTPUT_LOW(PORTGREEN, PINGREEN);
 	OUTPUT_HIGH(PORTRED, PINRED);
-	OUTPUT_LOW(PORTBLUE, PINBLUE);
 }
 
 void led_set_blue() {
 	OUTPUT_LOW(PORTGREEN, PINGREEN);
-	OUTPUT_LOW(PORTRED, PINRED);
 	OUTPUT_HIGH(PORTBLUE, PINBLUE);
 }
 
-void led_set_yellow() {
+void led_set_green_and_red() {
 	OUTPUT_HIGH(PORTGREEN, PINGREEN);
 	OUTPUT_HIGH(PORTRED, PINRED);
 	OUTPUT_LOW(PORTBLUE, PINBLUE);
@@ -44,17 +43,16 @@ void led_set_yellow() {
 
 void led_set_cyan() {
 	OUTPUT_HIGH(PORTGREEN, PINGREEN);
-	OUTPUT_LOW(PORTRED, PINRED);
 	OUTPUT_HIGH(PORTBLUE, PINBLUE);
 }
 
-void led_set_purple() {
+void led_set_blue_and_red() {
 	OUTPUT_LOW(PORTGREEN, PINGREEN);
 	OUTPUT_HIGH(PORTRED, PINRED);
 	OUTPUT_HIGH(PORTBLUE, PINBLUE);
 }
 
-void led_set_white() {
+void led_set_cyan_and_red() {
 	OUTPUT_HIGH(PORTGREEN, PINGREEN);
 	OUTPUT_HIGH(PORTRED, PINRED);
 	OUTPUT_HIGH(PORTBLUE, PINBLUE);
@@ -63,6 +61,15 @@ void led_set_white() {
 void led_reset() {
 	OUTPUT_LOW(PORTGREEN, PINGREEN);
 	OUTPUT_LOW(PORTRED, PINRED);
+	OUTPUT_LOW(PORTBLUE, PINBLUE);
+}
+
+void led_reset_top() {
+	OUTPUT_LOW(PORTRED, PINRED);
+}
+
+void led_reset_bot() {
+	OUTPUT_LOW(PORTGREEN, PINGREEN);
 	OUTPUT_LOW(PORTBLUE, PINBLUE);
 }
 
@@ -75,10 +82,10 @@ void led_test_all() {
 	_delay_ms(500);
 	led_set_cyan();
 	_delay_ms(500);
-	led_set_purple();
+	led_set_green_and_red();
 	_delay_ms(500);
-	led_set_yellow();
+	led_set_blue_and_red();
 	_delay_ms(500);
-	led_set_white();
+	led_set_cyan_and_red();
 	_delay_ms(500);
 }

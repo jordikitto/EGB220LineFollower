@@ -46,19 +46,19 @@ int main() {
 	led_reset();
 
 	while(1) {
-		if (isWhite(ReadEncoderLeft())) {
-			led_set_red();
-		}
-		if (isWhite(ReadEncoderRight())) {
+		//MOTORRIGHT_FORWARD = SET_SPEED(0.2);
+		//MOTORLEFT_FORWARD = SET_SPEED(0.2);
+
+		if (TriggeredEncoderLeft()) {
 			led_set_green();
+		} else {
+			led_reset_bot();
 		}
 
-		if (isBlack(ReadEncoderRight())) {
-			led_set_yellow();
-		}
-
-		if (isBlack(ReadEncoderLeft())) {
-			led_set_purple();
+		if (TriggeredEncoderRight()) {
+			led_set_red();
+		} else {
+			led_reset_top();
 		}
 	}
 
@@ -67,7 +67,6 @@ int main() {
 	// Start countdown
 	led_set_red();
 	_delay_ms(500);
-	led_set_yellow();
 	_delay_ms(500);
 	led_set_green();
 	_delay_ms(800);
@@ -149,7 +148,7 @@ int main() {
 				break;
 
 			default:
-				led_set_white();
+				led_reset();
 		}
 		
 
