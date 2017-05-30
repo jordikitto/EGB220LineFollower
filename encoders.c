@@ -1,8 +1,8 @@
 // Code for the encoders
 
 // Ports and Pins
-#define ENCODER_LEFT 0  //8
-#define ENCODER_RIGHT 1  //
+#define ENCODER_LEFT 8
+#define ENCODER_RIGHT 9
 
 #define ENCODER_THRESHOLD 0.05
 

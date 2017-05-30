@@ -5,11 +5,12 @@
 
 // Code Includes
 #include "macros.h"
+#include "helpers.c"
 #include "multiLED.c"
 #include "motors.c"
 #include "adc.c"
-#include "sensors.c"
 #include "switches.c"
+#include "sensors.c"
 #include "encoders.c"
 
 enum mode {LEFT, NORMAL, RIGHT};
@@ -23,6 +24,10 @@ int sensor_mid_dist = 5;
 
 float last_error = 0.0;
 float integral = 0;
+
+// Start Finish variables
+int seen_start = 0;
+int seen_finish = 0;
 
 // Interrupts
 ISR(TIMER0_OVF_vect) {
@@ -45,33 +50,29 @@ int main() {
 
 	led_reset();
 
-	while(1) {
-		//MOTORRIGHT_FORWARD = SET_SPEED(0.2);
-		//MOTORLEFT_FORWARD = SET_SPEED(0.2);
+	setup_color_marker_sensing();
 
-		if (TriggeredEncoderLeft()) {
-			led_set_green();
-		} else {
-			led_reset_bot();
-		}
+	test_color_readings();
 
-		if (TriggeredEncoderRight()) {
-			led_set_red();
-		} else {
-			led_reset_top();
-		}
-	}
-
-	led_test_all();
+	while (!within_start_color_range(ReadSensorRight(1)));
+	seen_start = 1;
 
 	// Start countdown
-	led_set_red();
+	led_set_green_and_red();
 	_delay_ms(500);
+	led_reset();
 	_delay_ms(500);
 	led_set_green();
-	_delay_ms(800);
+	_delay_ms(500);
+	led_reset();
+	_delay_ms(500);
 
-	while(1) {
+	while(!seen_finish) {
+		// Check for finish line
+		if (within_finish_color_range(ReadSensorRight(1))) {
+			seen_finish = 1;
+		}
+
 		// Read sensors
 		float sensor_right_out = ReadSensorMid(0); // outer right
 		float sensor_right_mid = ReadSensorMid(1); // middle right
@@ -157,6 +158,9 @@ int main() {
 		
 
 	}
+
+	Brake_Right();
+	Brake_Left();
 
 	return 0;
 }

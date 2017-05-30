@@ -22,6 +22,7 @@
 #define OUTPUT_LOW(port, pin)			port &= ~(1 << pin)
 #define OUTPUT_HIGH(port, pin)			port |= (1 << pin)
 #define INPUT_READ(port, pin)			port & (1 << pin)
+#define PIN_PRESSED(pin, num) 			(pin >> num & 1)
 #define TOGGLE(port, pin)				port ^= (1 << n)
 
 /*
