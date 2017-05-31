@@ -19,9 +19,13 @@
 float threshold_black = 0.5;
 float threshold_white = 0.2;
 
-float color_start;
-float color_finish;
-int color_readings = 100;
+typedef enum {GREEN, RED, BLACK, WHITE}  Color;
+
+float color_green;
+float color_red;
+float color_white;
+
+float color_sense_threshold = 5; // percent
 
 // Functions
 
@@ -74,95 +78,82 @@ float ReadSensorLeft(int sensor_num) {
 void setup_color_marker_sensing() {
 	led_reset();
 
-	// Record start color on button press
+	// Record green color on button press
 	led_set_green();
 	while(!switch_top_pressed());
 	// Record value from sensor
+	color_green = ReadSensorMid(1);
+
 	led_reset();
-
-	float readings_start[color_readings];
-
-	int index = 0;
-	while (index < color_readings) {
-		readings_start[index] = ReadSensorRight(1); // Takes average of both
-		index++;
-		_delay_ms(10);
-	}
-
-	// Get average value
-	color_start = get_sum(readings_start, color_readings)/color_readings;
-
-	// Ping LED
-	led_reset();
-	_delay_ms(250);
+	_delay_ms(100);
 	led_set_green();
-	_delay_ms(250);
-	led_reset();
+	_delay_ms(100);
 
-	// Record end color on button press
+	led_reset();
+	// Record red color on button press
 	led_set_red();
 	while(!switch_top_pressed());
-	led_reset();
-
 	// Record value from sensor
-	float readings_finish[color_readings];
+	color_red = ReadSensorMid(1);
 
-	index = 0;
-	while (index < color_readings) {
-		readings_finish[index] = ReadSensorRight(1); // Takes average of both
-		index++;
-		_delay_ms(10);
-	}
-
-	// Get average value
-	color_finish = get_sum(readings_finish, color_readings)/color_readings;
-
-	// Ping LED
 	led_reset();
-	_delay_ms(250);
+	_delay_ms(100);
 	led_set_red();
-	_delay_ms(250);
+	_delay_ms(100);
+
+	led_reset();
+	// Record white color on button press
+	led_set_cyan();
+	while(!switch_top_pressed());
+	// Record value from sensor
+	color_white = ReadSensorMid(1);
+
+	led_reset();
+	_delay_ms(100);
+	led_set_cyan();
+	_delay_ms(100);
+
 	led_reset();
 }
 
-int within_start_color_range(float reading) {
-	// Gets a similarity reading
-	float start_percent = ABS(reading - color_start)/color_start;
-	float finish_percent = ABS(reading - color_start)/color_start;
+Color get_detected_color(float reading) {
+	float green = (ABS(reading - color_green)/color_green)*100;
+	float red = (ABS(reading - color_red)/color_red)*100;
+	float white = (ABS(reading - color_white)/color_white)*100;
 
-	// If similarity is closer to start color, return true
-	if (start_percent < finish_percent) {
-		return 1;
-	} else {
-		return 0;
+	float vals[] = {green, red, white};
+	float min = get_min(vals, 3);
+
+	if (min == white && white < color_sense_threshold) {
+		return WHITE;
 	}
-}
-
-int within_finish_color_range(float reading) {
-	// Gets a similarity reading
-	float start_percent = ABS(reading - color_finish)/color_finish;
-	float finish_percent = ABS(reading - color_finish)/color_finish;
-
-	// If similarity is closer to finish color, return true
-	if (start_percent > finish_percent) {
-		return 1;
-	} else {
-		return 0;
+	if (min == green && green < color_sense_threshold) {
+		return GREEN;
 	}
+	if (min == red && red < color_sense_threshold) {
+		return RED;
+	}
+
+	return BLACK;
 }
 
 void test_color_readings() {
-	while(1) {
-		if (within_start_color_range(ReadSensorRight(1))) {
-			led_set_green();
-		} else {
-			led_reset();
-		}
+	while (1) {
+		Color current_color = get_detected_color(ReadSensorMid(1));
 
-		if (within_finish_color_range(ReadSensorRight(1))) {
-			led_set_red();
-		} else {
-			led_reset();
+		led_reset();
+		switch (current_color) {
+			case RED:
+				led_set_cyan();
+				break;
+			case GREEN:
+				led_set_green();
+				break;
+			case WHITE:
+				led_set_red();
+				break;
+			default:
+				led_reset();
 		}
 	}
 }

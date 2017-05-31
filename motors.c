@@ -6,12 +6,20 @@
 #define MOTORLEFT_REVERSE OCR0A
 #define MOTORLEFT_FORWARD OCR0B
 
-#define SET_SPEED(percent) (percent) * 255
-
 // PREDEFINES
 void setupMotor2AndTimer0();
 void setupMotor1AndTimer1();
 
+// Speed
+int SET_SPEED(float percent) {
+	if (percent > 1) {
+		return 255;
+	} else if (percent <= 0) {
+		return 0;
+	} else {
+		return percent * 255;
+	}
+}
 
 // Functions
 void setupMotor2AndTimer0() {
@@ -25,7 +33,7 @@ void setupMotor2AndTimer0() {
 
 	SET_OUTPUT(TIMSK0, 0); // Enable overflow interrupt
 
-	OCR0A = 0; // Set forward channel to 100%
+	OCR0A = 0; // Set forward channel to 0%
 	OCR0B = 0; // Set backward channel to 0%
 
 	SET_OUTPUT(TCCR0B, 2); // Start timer (prescaling @ 256)
@@ -43,7 +51,7 @@ void setupMotor1AndTimer1() {
 
 	SET_OUTPUT(TIMSK1, 0); // Enable overflow interrupt
 
-	OCR1A = 0; // Forward 100%
+	OCR1A = 0; // Forward 0%
 	OCR1B = 0; // Backward 0%
 
 	SET_OUTPUT(TCCR1B, 2); // Start timer (no prescaling)

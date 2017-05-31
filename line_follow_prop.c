@@ -3,21 +3,29 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
+// CONSTANTS
+#define timer_target 0.01 // seconds (intervals for timer)
+
 // Code Includes
 #include "macros.h"
-#include "helpers.c"
 #include "multiLED.c"
 #include "motors.c"
 #include "adc.c"
 #include "switches.c"
-#include "sensors.c"
 #include "encoders.c"
+#include "helpers.c"
+#include "sensors.c"
 
 enum mode {LEFT, NORMAL, RIGHT};
 enum mode current_mode = NORMAL;
 enum mode emergency_mode = NORMAL;
 
-int speed_max = SET_SPEED(0.5);
+int speed_max = 0.4;
+float speed_current_right = 0.4;
+float speed_current_left = 0.4;
+
+float speed_right;
+float speed_left;
 
 int sensor_out_dist = 15;
 int sensor_mid_dist = 5;
@@ -25,37 +33,52 @@ int sensor_mid_dist = 5;
 float last_error = 0.0;
 float integral = 0;
 
-// Start Finish variables
-int seen_start = 0;
-int seen_finish = 0;
+// Velocity variables
+int timer_count = 0; // How many times we've reached timer_target
+int rotations_right_count = 0;
+int rotations_right_time_previous = 0;
+int rotations_left_count = 0;
+int rotations_left_time_previous = 0;
+float change;
 
 // Interrupts
 ISR(TIMER0_OVF_vect) {
 
 }
 
-ISR(TIMER1_OVF_vect) {
+ISR(TIMER1_OVF_vect) { // No prescaling (AKA FAST)
+	if (RightWheelRotated(timer_count, speed_current_right)) {
+		if (rotations_right_time_previous != timer_count && rotations_right_count > 0) {
+			UpdateVelocityRight(rotations_right_time_previous, timer_count);
+			speed_current_right = setMotorSpeedRight(speed_right, speed_current_right);
+		}
+		rotations_right_count++;
+		rotations_right_time_previous = timer_count; // record rotation for next time
+	} else {
+		led_reset_bot();
+	}
 
+	if (LeftWheelRotated(timer_count, speed_current_left)) {
+		if (rotations_left_time_previous != timer_count && rotations_left_count > 0) {
+			UpdateVelocityLeft(rotations_left_time_previous, timer_count);
+			speed_current_left = setMotorSpeedLeft(speed_left, speed_current_left);
+		}
+		rotations_left_count++;
+		rotations_left_time_previous = timer_count;
+	} else {
+		led_reset_top();
+	}
 }
 
-int main() {
+// Timer keeper
+ISR(TIMER3_COMPA_vect) {
+	timer_count++;
+}
 
-	adc_init();
-	led_init();
-	switches_init();
-
-	sei(); // Enable global interrupts
-	setupMotor2AndTimer0();
-	setupMotor1AndTimer1();
-
-	led_reset();
-
-	setup_color_marker_sensing();
-
-	test_color_readings();
-
-	while (!within_start_color_range(ReadSensorRight(1)));
-	seen_start = 1;
+void setup_to_start() {
+	// Wait until button is pressed to go
+	led_set_cyan();
+	while(!switch_bot_pressed());
 
 	// Start countdown
 	led_set_green_and_red();
@@ -66,12 +89,31 @@ int main() {
 	_delay_ms(500);
 	led_reset();
 	_delay_ms(500);
+}
 
-	while(!seen_finish) {
-		// Check for finish line
-		if (within_finish_color_range(ReadSensorRight(1))) {
-			seen_finish = 1;
-		}
+int main() {
+
+	speed_left = speed_current_left;
+	speed_right = speed_current_right;
+
+	adc_init();
+	led_init();
+	switches_init();
+
+	sei(); // Enable global interrupts
+	setupMotor2AndTimer0();
+	setupMotor1AndTimer1();
+	setupTimer3();
+
+	//setup_color_marker_sensing();
+
+	// Testing triggers
+	test_color_readings();
+	test_encoders();
+
+	setup_to_start();
+
+	while(1) {
 
 		// Read sensors
 		float sensor_right_out = ReadSensorMid(0); // outer right
@@ -123,28 +165,28 @@ int main() {
 				Brakes_Release();
 
 				if (error > 0.05) { // positive, go right
-					MOTORRIGHT_FORWARD = speed_max;
-					MOTORLEFT_FORWARD = speed_max - ABS(speed_turn);
+					speed_right = speed_max * SPEED_AT_MAX_POWER;
+					speed_left = (speed_max - ABS(speed_turn)) * SPEED_AT_MAX_POWER;
 					
 				} else if (error < -0.05) { // negative, go left
-					MOTORRIGHT_FORWARD = speed_max - ABS(speed_turn);
-					MOTORLEFT_FORWARD = speed_max;
+					MOTORRIGHT_FORWARD = (speed_max - ABS(speed_turn)) * SPEED_AT_MAX_POWER;
+					MOTORLEFT_FORWARD = speed_max * SPEED_AT_MAX_POWER;
 				} else {
-					MOTORLEFT_FORWARD = speed_max;
-					MOTORRIGHT_FORWARD = speed_max;
+					MOTORLEFT_FORWARD = speed_max * SPEED_AT_MAX_POWER;
+					MOTORRIGHT_FORWARD = speed_max * SPEED_AT_MAX_POWER;
 				}
 				led_set_green();
 				break;
 
 			case LEFT:
-				MOTORRIGHT_FORWARD = speed_max*1.3;
+				MOTORRIGHT_FORWARD = speed_max*1.3 * SPEED_AT_MAX_POWER;
 				Brake_Left();
 				led_set_blue();
 				break;
 
 			case RIGHT:
 				Brake_Right();
-				MOTORLEFT_FORWARD = speed_max*1.3;
+				MOTORLEFT_FORWARD = speed_max*1.3 * SPEED_AT_MAX_POWER;
 				led_set_red();
 				break;
 
@@ -161,6 +203,7 @@ int main() {
 
 	Brake_Right();
 	Brake_Left();
+	led_reset();
 
 	return 0;
 }
