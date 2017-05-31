@@ -20,12 +20,9 @@ enum mode {LEFT, NORMAL, RIGHT};
 enum mode current_mode = NORMAL;
 enum mode emergency_mode = NORMAL;
 
-float speed_max = 0.8;
-float speed_current_right = 0.8;
-float speed_current_left = 0.8;
-
-float speed_right;
-float speed_left;
+int speed_max;
+float speed_current_right;
+float speed_current_left;
 
 int sensor_out_dist = 15;
 int sensor_mid_dist = 5;
@@ -50,23 +47,19 @@ ISR(TIMER1_OVF_vect) { // No prescaling (AKA FAST)
 	if (RightWheelRotated(timer_count, speed_current_right)) {
 		if (rotations_right_time_previous != timer_count && rotations_right_count > 0) {
 			UpdateVelocityRight(rotations_right_time_previous, timer_count);
-			speed_current_right = setMotorSpeedRight(500, speed_current_right);
+			speed_current_right = getVelocityRight();
 		}
 		rotations_right_count++;
 		rotations_right_time_previous = timer_count; // record rotation for next time
-	} else {
-		led_reset_bot();
 	}
 
 	if (LeftWheelRotated(timer_count, speed_current_left)) {
 		if (rotations_left_time_previous != timer_count && rotations_left_count > 0) {
 			UpdateVelocityLeft(rotations_left_time_previous, timer_count);
-			speed_current_left = setMotorSpeedLeft(500, speed_current_left);
+			speed_current_right = getVelocityLeft();
 		}
 		rotations_left_count++;
 		rotations_left_time_previous = timer_count;
-	} else {
-		led_reset_top();
 	}
 }
 
@@ -89,8 +82,7 @@ void setup_to_start() {
 
 int main() {
 
-	speed_left = speed_current_left * SPEED_AT_MAX_POWER;
-	speed_right = speed_current_right *SPEED_AT_MAX_POWER;
+	speed_max = SET_SPEED(0.5);
 
 	adc_init();
 	led_init();
@@ -101,10 +93,10 @@ int main() {
 	setupMotor1AndTimer1();
 	setupTimer3();
 
-	//setup_color_marker_sensing();
+	setup_color_marker_sensing();
 
 	// Testing triggers
-	//test_color_readings();
+	test_color_readings();
 	//test_encoders();
 
 	setup_to_start();
@@ -161,28 +153,28 @@ int main() {
 				Brakes_Release();
 
 				if (error > 0.05) { // positive, go right
-					speed_right = speed_max * SPEED_AT_MAX_POWER;
-					speed_left = (speed_max - ABS(speed_turn)) * SPEED_AT_MAX_POWER;
+					MOTORRIGHT_FORWARD = speed_max;
+					MOTORLEFT_FORWARD = speed_max - ABS(speed_turn);
 					
 				} else if (error < -0.05) { // negative, go left
-					speed_right = (speed_max - ABS(speed_turn)) * SPEED_AT_MAX_POWER;
-					speed_left = speed_max * SPEED_AT_MAX_POWER;
+					MOTORRIGHT_FORWARD = speed_max - ABS(speed_turn);
+					MOTORLEFT_FORWARD = speed_max;
 				} else {
-					speed_left = speed_max * SPEED_AT_MAX_POWER;
-					speed_right = speed_max * SPEED_AT_MAX_POWER;
+					MOTORLEFT_FORWARD = speed_max;
+					MOTORRIGHT_FORWARD = speed_max;
 				}
 				led_set_green();
 				break;
 
 			case LEFT:
-				speed_right = speed_max * 1.3 * SPEED_AT_MAX_POWER;
+				MOTORRIGHT_FORWARD = speed_max*1.3;
 				Brake_Left();
 				led_set_blue();
 				break;
 
 			case RIGHT:
 				Brake_Right();
-				speed_left = speed_max * 1.3 * SPEED_AT_MAX_POWER;
+				MOTORLEFT_FORWARD = speed_max*1.3;
 				led_set_red();
 				break;
 
