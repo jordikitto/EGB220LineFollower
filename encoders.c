@@ -96,12 +96,10 @@ float setMotorSpeedLeft(int desired_speed, float previous_speed) {
 	if (getVelocityLeft() > desired_speed) {
 		previous_speed = previous_speed - 0.05;
 		MOTORLEFT_FORWARD = SET_SPEED(previous_speed);
-		led_set_green();
 		return previous_speed;
 	} else {
 		previous_speed = previous_speed + 0.05;
 		MOTORLEFT_FORWARD = SET_SPEED(previous_speed);
-		led_set_red();
 		return previous_speed;
 	}
 }
@@ -153,12 +151,10 @@ float setMotorSpeedRight(int desired_speed, float previous_speed) {
 	if (getVelocityRight() > desired_speed) {
 		previous_speed = previous_speed - 0.05;
 		MOTORRIGHT_FORWARD = SET_SPEED(previous_speed);
-		led_set_green();
 		return previous_speed;
 	} else {
 		previous_speed = previous_speed + 0.05;
 		MOTORRIGHT_FORWARD = SET_SPEED(previous_speed);
-		led_set_red();
 		return previous_speed;
 	}
 }
