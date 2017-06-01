@@ -34,110 +34,110 @@ float get_sum(float numbers[], int count) {
 	return sum;
 }
 
-// void blink_value(float value) {
-// 	// Up to 5 figures > 0
-// 	// Uses int truncation to floor
+void blink_value(float value) {
+	// Up to 5 figures > 0
+	// Uses int truncation to floor
 
-// 	// Run away if value greater than 5 figures
-// 	if (value > 100000) {
-// 		led_set_green_and_red();
-// 		_delay_ms(2000);
-// 		return;
-// 	}
+	// Run away if value greater than 5 figures
+	if (value > 100000) {
+		led_set_green_and_red();
+		_delay_ms(2000);
+		return;
+	}
 
-// 	if ((value / 10000) > 1) {
-// 		double count = floor(value / 10000);
-// 		value = value - (10000 * count);
+	if ((value / 10000) > 1) {
+		double count = floor(value / 10000);
+		value = value - (10000 * count);
 
-// 		for (int i = 0; i < count; i++) {
-// 			led_set_green();
-// 			_delay_ms(201);
-// 			led_reset();
-// 			_delay_ms(201);
-// 		}
-// 	}
+		for (int i = 0; i < count; i++) {
+			led_set_green();
+			_delay_ms(201);
+			led_reset();
+			_delay_ms(201);
+		}
+	}
 
-// 	led_set_red();
-// 	_delay_ms(401);
-// 	led_reset();
+	led_set_red();
+	_delay_ms(401);
+	led_reset();
 
-// 	if ((value / 1000) > 1) {
-// 		double count = floor(value / 1000);
-// 		value = value - (1000 * count);
+	if ((value / 1000) > 1) {
+		double count = floor(value / 1000);
+		value = value - (1000 * count);
 
-// 		for (int i = 0; i < count; i++) {
-// 			led_set_green();
-// 			_delay_ms(201);
-// 			led_reset();
-// 			_delay_ms(201);
-// 		}
-// 	}
+		for (int i = 0; i < count; i++) {
+			led_set_green();
+			_delay_ms(201);
+			led_reset();
+			_delay_ms(201);
+		}
+	}
 
-// 	led_set_red();
-// 	_delay_ms(401);
-// 	led_reset();
+	led_set_red();
+	_delay_ms(401);
+	led_reset();
 
-// 	if ((value / 100) > 1) {
-// 		double count = floor(value / 100);
-// 		value = value - (100 * count);
+	if ((value / 100) > 1) {
+		double count = floor(value / 100);
+		value = value - (100 * count);
 
-// 		for (int i = 0; i < count; i++) {
-// 			led_set_green();
-// 			_delay_ms(201);
-// 			led_reset();
-// 			_delay_ms(201);
-// 		}
-// 	}
+		for (int i = 0; i < count; i++) {
+			led_set_green();
+			_delay_ms(201);
+			led_reset();
+			_delay_ms(201);
+		}
+	}
 
-// 	led_set_red();
-// 	_delay_ms(401);
-// 	led_reset();
+	led_set_red();
+	_delay_ms(401);
+	led_reset();
 
-// 	if ((value / 10) > 1) {
-// 		double count = floor(value / 10);
-// 		value = value - (10 * count);
+	if ((value / 10) > 1) {
+		double count = floor(value / 10);
+		value = value - (10 * count);
 
-// 		for (int i = 0; i < count; i++) {
-// 			led_set_green();
-// 			_delay_ms(201);
-// 			led_reset();
-// 			_delay_ms(201);
-// 		}
-// 	}
+		for (int i = 0; i < count; i++) {
+			led_set_green();
+			_delay_ms(201);
+			led_reset();
+			_delay_ms(201);
+		}
+	}
 
-// 	led_set_red();
-// 	_delay_ms(401);
-// 	led_reset();
+	led_set_red();
+	_delay_ms(401);
+	led_reset();
 
-// 	if ((value / 10) > 1) {
-// 		double count = floor(value / 10);
-// 		value = value - (10 * count);
+	if ((value / 10) > 1) {
+		double count = floor(value / 10);
+		value = value - (10 * count);
 
-// 		for (int i = 0; i < count; i++) {
-// 			led_set_green();
-// 			_delay_ms(201);
-// 			led_reset();
-// 			_delay_ms(201);
-// 		}
-// 	}
+		for (int i = 0; i < count; i++) {
+			led_set_green();
+			_delay_ms(201);
+			led_reset();
+			_delay_ms(201);
+		}
+	}
 
-// 	led_set_red();
-// 	_delay_ms(401);
-// 	led_reset();
+	led_set_red();
+	_delay_ms(401);
+	led_reset();
 
-// 	if ((value / 1) > 1) {
-// 		double count = floor(value / 1);
-// 		value = value - (1 * count);
+	if ((value / 1) > 1) {
+		double count = floor(value / 1);
+		value = value - (1 * count);
 
-// 		for (int i = 0; i < count; i++) {
-// 			led_set_green();
-// 			_delay_ms(201);
-// 			led_reset();
-// 			_delay_ms(201);
-// 		}
-// 	}
+		for (int i = 0; i < count; i++) {
+			led_set_green();
+			_delay_ms(201);
+			led_reset();
+			_delay_ms(201);
+		}
+	}
 
-// 	// Press bottom switch to continue
-// 	while(!switch_bot_pressed());
+	// Press bottom switch to continue
+	while(!switch_bot_pressed());
 
-// }
+}

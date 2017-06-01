@@ -9,8 +9,8 @@
 #define SENSORRIGHT_INNER 6
 #define SENSORRIGHT_OUTER 7
 
-#define SENSORLEFT_INNER 10
-#define SENSORLEFT_OUTER 11
+#define SENSORLEFT_INNER 11
+#define SENSORLEFT_OUTER 10
 
 #define isBlack(sensor_value) (sensor_value > threshold_black)
 #define isWhite(sensor_value) (sensor_value < threshold_white)
@@ -22,17 +22,16 @@ float threshold_white = 0.2;
 typedef enum {GREEN, RED, BLACK, WHITE}  Color;
 
 float color_green;
-float color_red;
 float color_white;
 
-float color_sense_threshold = 5; // percent
+float color_sense_threshold = 20; // percent
 
 int right_marker_count = 0;
-int markers_processing = 0;
-int markers_processed = 0;
-int markers_processing_timer;
-int markers_wait_timer;
-int markers_waiting = 0;
+int marker_seen = 0;
+int marker_seen_time_count = 0;
+
+int left_triggered = 0;
+int right_triggered = 0;
 
 // Functions
 
@@ -69,6 +68,19 @@ float ReadSensorRight(int sensor_num) {
 	}
 }
 
+float ReadSensorRight_raw(int sensor_num) {
+	switch (sensor_num) {
+		case 0:
+			return adc_read_sensor_raw(SENSORRIGHT_INNER);
+			break;
+		case 1:
+			return adc_read_sensor_raw(SENSORRIGHT_OUTER);
+			break;
+		default:
+			break;
+	}
+}
+
 float ReadSensorLeft(int sensor_num) {
 	switch (sensor_num) {
 		case 0:
@@ -82,80 +94,76 @@ float ReadSensorLeft(int sensor_num) {
 	}
 }
 
+float ReadSensorLeft_raw(int sensor_num) {
+	switch (sensor_num) {
+		case 0:
+			return adc_read_sensor_raw(SENSORLEFT_INNER);
+			break;
+		case 1:
+			return adc_read_sensor_raw(SENSORLEFT_OUTER);
+			break;
+		default:
+			break;
+	}
+}
+
 int getRightMarkerCount() {
 	return right_marker_count;
 }
 
 void ReadMarkers(int timer_count_input) {
 
-	// If we are waiting, check to see if time has elapsed, else, go away
-	if (markers_waiting) {
-		float time_elapsed_wait = (timer_count_input - markers_wait_timer) * timer_target;
-		if (time_elapsed_wait > 0.2) {
-			markers_waiting = 0; // We have waited, and are no longer waiting
-			markers_processed = 0; // We have now restarted, and not processed anything
+	if (marker_seen) {
+		float elapsed_time = (timer_count_input - marker_seen_time_count) * timer_target;
+		if (elapsed_time > 0.5) {
+
+			//led_reset();
+
+			if (left_triggered && right_triggered) {
+				//led_set_green_and_red();
+			} else if (left_triggered) {
+				led_set_green();
+				_delay_ms(50);
+				led_reset_bot();
+			} else if (right_triggered) {
+				//led_set_red();
+				right_marker_count++;
+			}
+
+			left_triggered = 0;
+			right_triggered = 0;
+			marker_seen = 0;
+
+			return;
 		} else {
+
+			int left_triggered_current = isWhite(ReadSensorLeft(1));
+			int right_triggered_current = isWhite(ReadSensorRight(1));
+
+			if (left_triggered_current && right_triggered_current) {
+				left_triggered = 1;
+				right_triggered = 1;
+			} else if (left_triggered_current) {
+				left_triggered = 1;
+			} else if (right_triggered_current) {
+				right_triggered = 1;
+			}
+
 			return;
 		}
 	}
+	
 
-	// Come here second when we are processing now, only after time elapsed, move to post-processing
-	// knowing we are probably about midway on the line
-	if (markers_processing) {
-		float time_elapsed_process = (timer_count_input - markers_processing_timer) * timer_target;
-		if (time_elapsed_process > 0.001) {
-			markers_processing = 0;
-		} else {
-			return;
-		}
+	int left_triggered_current = isWhite(ReadSensorLeft(1));
+	int right_triggered_current = isWhite(ReadSensorRight(1));
+
+	if (left_triggered_current || right_triggered_current) {
+		marker_seen = 1;
 	}
 
-	// Save variables for checking (optimises)
-	int triggered_left = isWhite(ReadSensorLeft(0));
-	int triggered_right = isWhite(ReadSensorRight(1));
-
-	// Come here first, record the time and say we are processing, if we have not processed
-	if ((triggered_right || triggered_left) && !markers_processed) {
-		markers_processing = 1;
-		markers_processing_timer = timer_count_input;
+	if (marker_seen) {
+		marker_seen_time_count = timer_count_input;
 	}
-
-	// Come here third for post processing
-
-
-
-	if (triggered_right && triggered_left) {
-		led_set_red();
-		_delay_ms(50);
-		led_reset();
-	} else {
-		if (triggered_right) {
-			right_marker_count++;
-			led_set_cyan();
-			_delay_ms(50);
-			led_reset();
-		}
-
-		if (triggered_left) {
-			led_set_green();
-			_delay_ms(50);
-			led_reset();
-		}
-	}
-
-
-	// Once post processed, and not waiting, start to wait
-	if (!markers_waiting) {
-		// We have now processed
-		markers_processed = 1;
-
-		// Wait a bit until seeing next marker
-		// Record current time for waiting
-		markers_wait_timer = timer_count_input;
-		// Remember we are waiting
-		markers_waiting = 1;
-	}
-
 
 }
 
@@ -166,7 +174,7 @@ void setup_color_marker_sensing() {
 	led_set_green();
 	while(!switch_top_pressed());
 	// Record value from sensor
-	color_green = ReadSensorMid(1);
+	color_green = ReadSensorLeft_raw(1);
 
 	led_reset();
 	_delay_ms(100);
@@ -174,23 +182,11 @@ void setup_color_marker_sensing() {
 	_delay_ms(100);
 
 	led_reset();
-	// Record red color on button press
-	led_set_red();
-	while(!switch_top_pressed());
-	// Record value from sensor
-	color_red = ReadSensorMid(1);
-
-	led_reset();
-	_delay_ms(100);
-	led_set_red();
-	_delay_ms(100);
-
-	led_reset();
 	// Record white color on button press
 	led_set_cyan();
 	while(!switch_top_pressed());
 	// Record value from sensor
-	color_white = ReadSensorMid(1);
+	color_white = ReadSensorLeft_raw(1);
 
 	led_reset();
 	_delay_ms(100);
@@ -198,15 +194,24 @@ void setup_color_marker_sensing() {
 	_delay_ms(100);
 
 	led_reset();
+
+	// blink_value(color_green);
+
+	// led_reset();
+	// _delay_ms(500);
+	// led_set_cyan();
+	// _delay_ms(500);
+
+	// blink_value(color_white);
+
 }
 
 Color get_detected_color(float reading) {
 	float green = (ABS(reading - color_green)/color_green)*100;
-	float red = (ABS(reading - color_red)/color_red)*100;
 	float white = (ABS(reading - color_white)/color_white)*100;
 
-	float vals[] = {green, red, white};
-	float min = get_min(vals, 3);
+	float vals[] = {green, white};
+	float min = get_min(vals, 2);
 
 	if (min == white && white < color_sense_threshold) {
 		return WHITE;
@@ -214,22 +219,47 @@ Color get_detected_color(float reading) {
 	if (min == green && green < color_sense_threshold) {
 		return GREEN;
 	}
-	if (min == red && red < color_sense_threshold) {
-		return RED;
-	}
 
 	return BLACK;
 }
 
+Color get_detected_color_simple(float reading) {
+	float diff_green = fabs(color_green - reading);
+	float diff_white = fabs(color_white - reading);
+
+	float vals[] = {diff_green, diff_white};
+	float min = get_min(vals, 2);
+
+	if (min < 15) {
+		if (min == diff_green) {
+			return GREEN;
+		}
+		if (min == diff_white) {
+			return WHITE;
+		}
+	} else {
+		return BLACK;
+	}
+}
+
+int isColoredMarker() {
+	Color current_color = get_detected_color_simple(ReadSensorLeft_raw(1));
+
+	if (current_color == GREEN) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+
+
 void test_color_readings() {
 	while (1) {
-		Color current_color = get_detected_color(ReadSensorMid(1));
+		Color current_color = get_detected_color_simple(ReadSensorLeft_raw(1));
 
 		led_reset();
 		switch (current_color) {
-			case RED:
-				led_set_cyan();
-				break;
 			case GREEN:
 				led_set_green();
 				break;

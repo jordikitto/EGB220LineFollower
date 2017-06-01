@@ -69,3 +69,24 @@ float adc_read_sensor(int sensor) {
 
   return max_lcd_adc;
 }
+
+float adc_read_sensor_raw(int sensor) {
+
+	// Select voltage reference for necessary ADC readings
+	if (sensor > 7) { // Adjust to read ADC8 to ADC13
+		OUTPUT_HIGH(ADCSRB, MUX5);
+
+		// Adjust sensor number to loop back in byte
+		// E.g. 8 becomes 0
+		sensor = (sensor % 7) - 1;
+
+	} else { // Adjust to read ADC0 to ADC7
+		OUTPUT_LOW(ADCSRB, MUX5);
+	}
+
+  uint16_t adc_result = adc_read(sensor); // change number to sensor pin number
+
+  float max_lcd_adc = (float)adc_result; // value between 0 and 1023
+
+  return max_lcd_adc;
+}

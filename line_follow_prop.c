@@ -2,6 +2,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
+#include <math.h>
 
 // CONSTANTS
 #define timer_target 0.001 // seconds (intervals for timer)
@@ -21,6 +22,8 @@ enum mode current_mode = NORMAL;
 enum mode emergency_mode = NORMAL;
 
 int speed_max;
+float speed_max_percent = 0.5;
+float speed_slow = 0.25;
 float speed_current_right = 0;
 float speed_current_left = 0;
 
@@ -37,6 +40,18 @@ int rotations_right_time_previous = 0;
 int rotations_left_count = 0;
 int rotations_left_time_previous = 0;
 float change;
+
+// Marker stuff
+int colored_marker_count = 0;
+int black_marker_count = 0;
+int colored_markers_seen = 0;
+
+int already_stopped = 0;
+
+int seen_colored = 0;
+
+// Straight detection
+int straight_count = 0;
 
 // Interrupts
 ISR(TIMER0_OVF_vect) {
@@ -82,7 +97,7 @@ void setup_to_start() {
 
 int main() {
 
-	speed_max = SET_SPEED(0.4);
+	speed_max = SET_SPEED(speed_max_percent);
 
 	adc_init();
 	led_init();
@@ -93,15 +108,52 @@ int main() {
 	setupMotor1AndTimer1();
 	setupTimer3();
 
+	// while(1) {
+	// 	if (isWhite(ReadSensorRight(0))) {
+	// 		led_set_green();
+	// 	} else {
+	// 		led_reset_bot();
+	// 	}
+
+	// 	if (isWhite(ReadSensorRight(1))) {
+	// 		led_set_red();
+	// 	} else {
+	// 		led_reset_top();
+	// 	}
+	// }
+
+	// while(1) {
+	// 	MOTORRIGHT_FORWARD = SET_SPEED(speed_slow);
+	// 	MOTORLEFT_FORWARD = SET_SPEED(speed_slow);
+	// }
+
 	//setup_color_marker_sensing();
 
 	// Testing triggers
 	//test_color_readings();
 	//test_encoders();
 
+	// while(1) {
+	// 	float value = ReadSensorRight_raw(1);
+	// 	blink_value(value);
+	// }
+
 	setup_to_start();
 
-	while(getRightMarkerCount() < 2) {
+	while(1) {
+
+		if (getRightMarkerCount() % 2 == 0) {
+			if (!already_stopped) {
+				already_stopped = 1;
+				Brake_Left();
+				Brake_Right();
+				_delay_ms(2000);
+			}
+		} else {
+			already_stopped = 0;
+			//MOTORRIGHT_FORWARD = SET_SPEED(speed_max_percent);
+			//MOTORLEFT_FORWARD = SET_SPEED(speed_max_percent);
+		}
 
 		// Read sensors
 		float sensor_right_out = ReadSensorMid(0); // outer right
@@ -110,24 +162,92 @@ int main() {
 		float sensor_left_out = ReadSensorMid(3); // outer left	
 
 		// Read side sensors
-		//ReadMarkers(timer_count);
+		ReadMarkers(timer_count);
 
-		
-		if (isWhite(ReadSensorLeft(0))) {
-			led_set_green();
-		} else {
-			led_reset_bot();
+		// if (isColoredMarker(ReadSensorLeft_raw(1))) {
+		// 	colored_marker_count++;
+
+		// 	if (colored_marker_count > 20) {
+		// 		led_set_red();
+		// 		colored_markers_seen++;
+
+		// 		if (colored_markers_seen % 2 == 1) { // If seen first green line
+		// 			speed_max = SET_SPEED(speed_slow);
+		// 		} else { // Else seen red line
+		// 			speed_max = SET_SPEED(speed_max_percent);
+		// 			led_reset();
+		// 		}
+
+		// 		colored_marker_count = 0;
+				
+		// 	}
+
+		// } else {
+		// 	colored_marker_count = 0;
+		// }
+
+		// Color current_color = get_detected_color_simple(ReadSensorLeft_raw(1));
+
+		// if (current_color == GREEN && !seen_colored) {
+		// 	colored_marker_count++;
+
+		// 	if (colored_marker_count > 5) {
+		// 		seen_colored = 1;
+		// 	}
+
+			
+		// } else {
+		// 	colored_marker_count = 0;
+		// }
+
+		// if (seen_colored) {
+		// 	if (current_color == BLACK) {
+		// 		black_marker_count++;
+
+		// 		if (black_marker_count > 5) {
+		// 			led_set_red();
+		// 			colored_markers_seen++;
+
+		// 			if (colored_markers_seen % 2 == 1) { // If seen first green line
+		// 				speed_max = SET_SPEED(speed_slow);
+		// 			} else { // Else seen red line
+		// 				speed_max = SET_SPEED(speed_max_percent);
+		// 				led_reset();
+		// 			}
+
+		// 			seen_colored = 0;
+		// 			colored_marker_count = 0;
+		// 			black_marker_count = 0;
+		// 		}
+		// 	} else if (current_color == WHITE) {
+		// 		//seen_colored = 0;
+		// 		colored_marker_count = 0;
+		// 		black_marker_count = 0;
+		// 	}
+		// }
+
+		// Detect straights
+		float speed_right = MOTORRIGHT_FORWARD;
+		float speed_left = MOTORLEFT_FORWARD;
+
+		if ((speed_right > (speed_max * 0.7)) && (speed_left > (speed_max * 0.7))) {
+			float difference = fabs(speed_right - speed_left);
+
+			if (difference < 30) {
+				straight_count++;
+
+				if (straight_count > 100) {
+					led_set_red();
+				} else {
+					led_reset_top();
+				}
+			} else {
+				straight_count = 0;
+			}
 		}
 
-		if (isWhite(ReadSensorRight(1))) {
-			led_set_red();
-		} else {
-			led_reset_top();
-		}
-		
 
 
-		led_reset();
 
 		// Detect if off-line/derailed
 		if (isBlack(sensor_right_out) && isBlack(sensor_right_mid) && isBlack(sensor_left_mid) && isBlack(sensor_left_out)) {
