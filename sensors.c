@@ -27,6 +27,13 @@ float color_white;
 
 float color_sense_threshold = 5; // percent
 
+int right_marker_count = 0;
+int markers_processing = 0;
+int markers_processed = 0;
+int markers_processing_timer;
+int markers_wait_timer;
+int markers_waiting = 0;
+
 // Functions
 
 // Func: Returns an individual sensor reading from middle sensorboard
@@ -73,6 +80,83 @@ float ReadSensorLeft(int sensor_num) {
 		default:
 			break;
 	}
+}
+
+int getRightMarkerCount() {
+	return right_marker_count;
+}
+
+void ReadMarkers(int timer_count_input) {
+
+	// If we are waiting, check to see if time has elapsed, else, go away
+	if (markers_waiting) {
+		float time_elapsed_wait = (timer_count_input - markers_wait_timer) * timer_target;
+		if (time_elapsed_wait > 0.2) {
+			markers_waiting = 0; // We have waited, and are no longer waiting
+			markers_processed = 0; // We have now restarted, and not processed anything
+		} else {
+			return;
+		}
+	}
+
+	// Come here second when we are processing now, only after time elapsed, move to post-processing
+	// knowing we are probably about midway on the line
+	if (markers_processing) {
+		float time_elapsed_process = (timer_count_input - markers_processing_timer) * timer_target;
+		if (time_elapsed_process > 0.001) {
+			markers_processing = 0;
+		} else {
+			return;
+		}
+	}
+
+	// Save variables for checking (optimises)
+	int triggered_left = isWhite(ReadSensorLeft(0));
+	int triggered_right = isWhite(ReadSensorRight(1));
+
+	// Come here first, record the time and say we are processing, if we have not processed
+	if ((triggered_right || triggered_left) && !markers_processed) {
+		markers_processing = 1;
+		markers_processing_timer = timer_count_input;
+	}
+
+	// Come here third for post processing
+
+
+
+	if (triggered_right && triggered_left) {
+		led_set_red();
+		_delay_ms(50);
+		led_reset();
+	} else {
+		if (triggered_right) {
+			right_marker_count++;
+			led_set_cyan();
+			_delay_ms(50);
+			led_reset();
+		}
+
+		if (triggered_left) {
+			led_set_green();
+			_delay_ms(50);
+			led_reset();
+		}
+	}
+
+
+	// Once post processed, and not waiting, start to wait
+	if (!markers_waiting) {
+		// We have now processed
+		markers_processed = 1;
+
+		// Wait a bit until seeing next marker
+		// Record current time for waiting
+		markers_wait_timer = timer_count_input;
+		// Remember we are waiting
+		markers_waiting = 1;
+	}
+
+
 }
 
 void setup_color_marker_sensing() {

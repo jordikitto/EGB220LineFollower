@@ -4,7 +4,7 @@
 #include <util/delay.h>
 
 // CONSTANTS
-#define timer_target 0.01 // seconds (intervals for timer)
+#define timer_target 0.001 // seconds (intervals for timer)
 
 // Code Includes
 #include "macros.h"
@@ -82,7 +82,7 @@ void setup_to_start() {
 
 int main() {
 
-	speed_max = SET_SPEED(0.5);
+	speed_max = SET_SPEED(0.4);
 
 	adc_init();
 	led_init();
@@ -101,13 +101,31 @@ int main() {
 
 	setup_to_start();
 
-	while(1) {
+	while(getRightMarkerCount() < 2) {
 
 		// Read sensors
 		float sensor_right_out = ReadSensorMid(0); // outer right
 		float sensor_right_mid = ReadSensorMid(1); // middle right
 		float sensor_left_mid = ReadSensorMid(2); // middle left
 		float sensor_left_out = ReadSensorMid(3); // outer left	
+
+		// Read side sensors
+		//ReadMarkers(timer_count);
+
+		
+		if (isWhite(ReadSensorLeft(0))) {
+			led_set_green();
+		} else {
+			led_reset_bot();
+		}
+
+		if (isWhite(ReadSensorRight(1))) {
+			led_set_red();
+		} else {
+			led_reset_top();
+		}
+		
+
 
 		led_reset();
 
@@ -163,23 +181,24 @@ int main() {
 					MOTORLEFT_FORWARD = speed_max;
 					MOTORRIGHT_FORWARD = speed_max;
 				}
-				led_set_green();
+				//led_set_green();
 				break;
 
 			case LEFT:
 				MOTORRIGHT_FORWARD = speed_max*1.3;
 				Brake_Left();
-				led_set_blue();
+				//led_set_blue();
 				break;
 
 			case RIGHT:
 				Brake_Right();
 				MOTORLEFT_FORWARD = speed_max*1.3;
-				led_set_red();
+				//led_set_red();
 				break;
 
 			default:
-				led_reset();
+				break;
+				//led_reset();
 		}
 		
 
