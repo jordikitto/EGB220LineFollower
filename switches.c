@@ -11,3 +11,11 @@ void switches_init() {
 	SET_INPUT(SWITCH_DDR, SWITCH_BOT_PIN);
 }
 
+int switch_top_pressed() {
+	return (INPUT_READ(SWITCH_PIN, SWITCH_TOP_PIN));
+}
+
+int switch_bot_pressed() {
+	return (INPUT_READ(SWITCH_PIN, SWITCH_BOT_PIN));
+}
+

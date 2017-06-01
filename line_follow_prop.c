@@ -3,20 +3,26 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
+// CONSTANTS
+#define timer_target 0.01 // seconds (intervals for timer)
+
 // Code Includes
 #include "macros.h"
 #include "multiLED.c"
 #include "motors.c"
 #include "adc.c"
-#include "sensors.c"
 #include "switches.c"
 #include "encoders.c"
+#include "helpers.c"
+#include "sensors.c"
 
 enum mode {LEFT, NORMAL, RIGHT};
 enum mode current_mode = NORMAL;
 enum mode emergency_mode = NORMAL;
 
-int speed_max = SET_SPEED(0.5);
+int speed_max;
+float speed_current_right;
+float speed_current_left;
 
 int sensor_out_dist = 15;
 int sensor_mid_dist = 5;
@@ -24,16 +30,59 @@ int sensor_mid_dist = 5;
 float last_error = 0.0;
 float integral = 0;
 
+// Velocity variables
+int timer_count = 0; // How many times we've reached timer_target
+int rotations_right_count = 0;
+int rotations_right_time_previous = 0;
+int rotations_left_count = 0;
+int rotations_left_time_previous = 0;
+float change;
+
 // Interrupts
 ISR(TIMER0_OVF_vect) {
 
 }
 
-ISR(TIMER1_OVF_vect) {
+ISR(TIMER1_OVF_vect) { // No prescaling (AKA FAST)
+	if (RightWheelRotated(timer_count, speed_current_right)) {
+		if (rotations_right_time_previous != timer_count && rotations_right_count > 0) {
+			UpdateVelocityRight(rotations_right_time_previous, timer_count);
+			speed_current_right = getVelocityRight();
+		}
+		rotations_right_count++;
+		rotations_right_time_previous = timer_count; // record rotation for next time
+	}
 
+	if (LeftWheelRotated(timer_count, speed_current_left)) {
+		if (rotations_left_time_previous != timer_count && rotations_left_count > 0) {
+			UpdateVelocityLeft(rotations_left_time_previous, timer_count);
+			speed_current_right = getVelocityLeft();
+		}
+		rotations_left_count++;
+		rotations_left_time_previous = timer_count;
+	}
+}
+
+// Timer keeper
+ISR(TIMER3_COMPA_vect) {
+	timer_count++;
+}
+
+void setup_to_start() {
+	// Start countdown
+	led_set_green_and_red();
+	_delay_ms(500);
+	led_reset();
+	_delay_ms(500);
+	led_set_green();
+	_delay_ms(500);
+	led_reset();
+	_delay_ms(500);
 }
 
 int main() {
+
+	speed_max = SET_SPEED(0.5);
 
 	adc_init();
 	led_init();
@@ -42,37 +91,18 @@ int main() {
 	sei(); // Enable global interrupts
 	setupMotor2AndTimer0();
 	setupMotor1AndTimer1();
+	setupTimer3();
 
-	led_reset();
+	setup_color_marker_sensing();
 
-	while(1) {
-		if (isWhite(ReadEncoderLeft())) {
-			led_set_red();
-		}
-		if (isWhite(ReadEncoderRight())) {
-			led_set_green();
-		}
+	// Testing triggers
+	test_color_readings();
+	//test_encoders();
 
-		if (isBlack(ReadEncoderRight())) {
-			led_set_yellow();
-		}
-
-		if (isBlack(ReadEncoderLeft())) {
-			led_set_purple();
-		}
-	}
-
-	led_test_all();
-
-	// Start countdown
-	led_set_red();
-	_delay_ms(500);
-	led_set_yellow();
-	_delay_ms(500);
-	led_set_green();
-	_delay_ms(800);
+	setup_to_start();
 
 	while(1) {
+
 		// Read sensors
 		float sensor_right_out = ReadSensorMid(0); // outer right
 		float sensor_right_mid = ReadSensorMid(1); // middle right
@@ -149,7 +179,7 @@ int main() {
 				break;
 
 			default:
-				led_set_white();
+				led_reset();
 		}
 		
 
@@ -158,6 +188,10 @@ int main() {
 		
 
 	}
+
+	Brake_Right();
+	Brake_Left();
+	led_reset();
 
 	return 0;
 }
