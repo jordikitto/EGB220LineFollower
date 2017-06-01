@@ -21,8 +21,8 @@ enum mode current_mode = NORMAL;
 enum mode emergency_mode = NORMAL;
 
 int speed_max;
-float speed_current_right;
-float speed_current_left;
+float speed_current_right = 0;
+float speed_current_left = 0;
 
 int sensor_out_dist = 15;
 int sensor_mid_dist = 5;
@@ -44,23 +44,23 @@ ISR(TIMER0_OVF_vect) {
 }
 
 ISR(TIMER1_OVF_vect) { // No prescaling (AKA FAST)
-	if (RightWheelRotated(timer_count, speed_current_right)) {
-		if (rotations_right_time_previous != timer_count && rotations_right_count > 0) {
-			UpdateVelocityRight(rotations_right_time_previous, timer_count);
-			speed_current_right = getVelocityRight();
-		}
-		rotations_right_count++;
-		rotations_right_time_previous = timer_count; // record rotation for next time
-	}
+	// if (RightWheelRotated(timer_count, speed_current_right)) {
+	// 	if (rotations_right_time_previous != timer_count && rotations_right_count > 0) {
+	// 		UpdateVelocityRight(rotations_right_time_previous, timer_count);
+	// 		speed_current_right = getVelocityRight();
+	// 	}
+	// 	rotations_right_count++;
+	// 	rotations_right_time_previous = timer_count; // record rotation for next time
+	// }
 
-	if (LeftWheelRotated(timer_count, speed_current_left)) {
-		if (rotations_left_time_previous != timer_count && rotations_left_count > 0) {
-			UpdateVelocityLeft(rotations_left_time_previous, timer_count);
-			speed_current_right = getVelocityLeft();
-		}
-		rotations_left_count++;
-		rotations_left_time_previous = timer_count;
-	}
+	// if (LeftWheelRotated(timer_count, speed_current_left)) {
+	// 	if (rotations_left_time_previous != timer_count && rotations_left_count > 0) {
+	// 		UpdateVelocityLeft(rotations_left_time_previous, timer_count);
+	// 		speed_current_left = getVelocityLeft();
+	// 	}
+	// 	rotations_left_count++;
+	// 	rotations_left_time_previous = timer_count;
+	// }
 }
 
 // Timer keeper
@@ -93,10 +93,10 @@ int main() {
 	setupMotor1AndTimer1();
 	setupTimer3();
 
-	setup_color_marker_sensing();
+	//setup_color_marker_sensing();
 
 	// Testing triggers
-	test_color_readings();
+	//test_color_readings();
 	//test_encoders();
 
 	setup_to_start();
